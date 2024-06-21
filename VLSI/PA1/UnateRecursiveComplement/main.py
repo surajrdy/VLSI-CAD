@@ -1,133 +1,100 @@
 from pcn import PCN_create
-from io import StringIO
 import sys
 
-answer = None
-
-
-#Termination Cases
-def DeMorgans(func, nvars):
-    #Check for new cube list size
-    complement = [[['11'] * nvars] * non_dc]
-    non_dc = nvars
+# Termination Cases
+def DeMorgans(func, nvars, ncubes):
+    complement = []
     counter = 0
-    for x in range(nvars):
-        if func[0][x] == '11':
-            non_dc - 1
-            counter+=1
-    #All don't care Cube
+    for y in range(ncubes):
+        for x in range(nvars):
+            if func[y][x] == '11':
+                counter += 1
+    # All don't care Cube
     if counter == nvars:
         complement = [['']]
-    c = 0
-    for x in range(nvars):
-        if func[0][x] == "01":
-            complement[c][x] == "10"
-            c += 1
-        elif func[0][x] == "10":
-            complement[c][x] == "01"
-            c += 1
-        else: 
-            c+1
+        return complement
+    for y in range(ncubes):
+        for x in range(nvars):
+            if func[y][x] == "01":
+                new_cube = ['11'] * nvars
+                new_cube[x] = "10"
+                complement.append(new_cube)
+            elif func[y][x] == "10":
+                new_cube = ['11'] * nvars
+                new_cube[x] = "01"
+                complement.append(new_cube)
     return complement
 
 def Final(func, nvars, ncubes):
+    print(func)
     if len(func) == 0:
         return [['11'] * nvars]
     elif len(func) == 1:
-        return DeMorgans(func, nvars)    
+        return DeMorgans(func, nvars, ncubes)
     else:
-        counterDC = 0
         for x in range(ncubes):
-            for y in range(0, nvars):
-                if func[x] == [['11' * nvars]]:
-                    return [['']]
-        #Code bulk of project
+            if func[x] == ['11' * nvars]:
+                return [['']]
+        # Code bulk of project
         z = BinateSelection(func, nvars, ncubes)
+        print(z)
         P = CoFactor(func, z, 'true', ncubes)
         N = CoFactor(func, z, 'neg', ncubes)
-        P_n = Final(P, nvars)
-        N_n = Final(N, nvars)
-        P_c = AND(z, P_n, 'true')
-        N_c = AND(z, N_n, 'comp')
+        P_n = Final(P, nvars, len(P))
+        N_n = Final(N, nvars, len(N))
+        P_c = AND(P_n, z, 'true')
+        N_c = AND(N_n, z, 'comp')
         answer = OR(P_c, N_c)
         return answer
 
 def BinateVariable(function, nvars, ncubes):
-
-    cubes = function
-
     true_count = [0] * nvars
     neg_count = [0] * nvars
-    binate_list = [False] *nvars
+
+    binate_list = [False] * nvars
     binate = False
 
     for x in range(ncubes):
-        for y in range(0, nvars-1):
-            if cubes[x][y] == '01':
+        for y in range(nvars):
+            if function[x][y] == '01':
                 true_count[y] += 1
-            elif cubes[x][y] == '10':
+            elif function[x][y] == '10':
                 neg_count[y] += 1
     
     for y in range(nvars):
-        if true_count[y] > 0 and neg_count > 0:
+        if true_count[y] > 0 and neg_count[y] > 0:
             binate_list[y] = True
             binate = True
 
     return true_count, neg_count, binate_list, binate
 
 def BinateSelection(function, nvars, ncubes):
-
     true_count, neg_count, binate_list, binate = BinateVariable(function, nvars, ncubes)
-
-    if binate == True:
+    if binate:
         final_binate = None
         most_binate = 0
         tiebreaker = False
-        for y in range(0, nvars-1):
-            if binate_list[y] == True:
-                b_counter = true_count[y] + neg_count[y] 
+        for y in range(nvars):
+            if binate_list[y]:
+                b_counter = true_count[y] + neg_count[y]
                 if b_counter > most_binate:
                     most_binate = b_counter
                     final_binate = y
                     tiebreaker = False
                 elif b_counter == most_binate:
                     tiebreaker = True
-        if tiebreaker == True:
-            TC = [-1] * nvars
-            min = true_count[0] - neg_count[0]
-            winner = None
-            lowest_index_count = 0
-            for y in range(0, nvars-1):
-                if binate_list[y] == True:
-                    TC[y] = abs(true_count[y] - neg_count[y])
-            for y in range(0, nvars-1):
-                if min > TC[y] and TC[y] != -1:
-                    min = TC[y]
-                    winner = y
-                elif min == TC[y]:
-                    lowest_index_count+=1
-            if lowest_index_count > 1:
-                for y in range(0, nvars-1):
-                    if TC[y] == min:
-                        final_binate = y
-                        break
-            elif lowest_index_count <= 1:
-                final_binate = winner
-            return final_binate
-        else:
-            return final_binate
-    #Unate Function
+        if tiebreaker:
+            TC = [abs(true_count[y] - neg_count[y]) if binate_list[y] else float('inf') for y in range(nvars)]
+            min_TC = min(TC)
+            final_binate = TC.index(min_TC)
+        return final_binate
     else:
         max_unate = 0
         winner = None
         for y in range(nvars):
-            if true_count[y] or neg_count[y] > max_unate:
+            if true_count[y] > max_unate or neg_count[y] > max_unate:
                 max_unate = max(true_count[y], neg_count[y])
                 winner = y
-            else:
-                for x in range(nvars):
-                    if true_count[x] or neg_count[x] == max_unate:
-                        winner = x
         return winner
 
 def OR(cofunction1, cofunction2):
@@ -141,47 +108,35 @@ def OR(cofunction1, cofunction2):
 def AND(cofunction, mostbinate, factor):
     for i in range(len(cofunction)):
         if factor == 'comp':
-            cofunction[i][mostbinate-1] = '10'
-        elif factor =='true':
-            cofunction[i][mostbinate-1] = '01'
+            cofunction[i][mostbinate] = '10'
+        elif factor == 'true':
+            cofunction[i][mostbinate] = '01'
     return cofunction
 
 def CoFactor(function, mostbinate, term, ncubes):
     cofactor = []
-    terminator = None
-    opposite = None
-    cube_count = 0
-    if term == 'true':
-        terminate = '10'
-        opposite = '01'
-    else:
-        terminate = '01'
-        opposite = '10'
+    terminator = '10' if term == 'true' else '01' 
+    opposite = '01' if term == 'true' else '10'
+    
     for i in range(ncubes):
-        if function[i][mostbinate-1] != terminator:
-            cube_count += 1
-            new_cube = function[i][:]
-            for j in range(len(function[i])):
-                new_cube[cube_count][j] = function[i][j]
-                if j == mostbinate-1:
-                    if function[i][j] == opposite:
-                        new_cube[cube_count][j] = '11'
+        if function[i][mostbinate] != terminator:
+            new_cube = function[i].copy()
+            if function[i][mostbinate] == opposite:
+                new_cube[mostbinate] = '11' 
             cofactor.append(new_cube)
     return cofactor
 
-def format(answer):
+def format_answer(answer):
     output = []
-    for x in answer:
-        counter = 0
-        for y in answer[x]:
-            if y != '11':
-                counter += 1
-                if y == '01':
-                    output[x][counter] == str(y)
-                elif y =='10':
-                    output[x][counter] == '-' + str(y)
+    for cube in answer:
+        formatted_cube = ""
+        for idx, val in enumerate(cube):
+            if val == '01':
+                formatted_cube += f"{idx+1}"
+            elif val == '10':
+                formatted_cube += f"-{idx+1}"
+        output.append(formatted_cube)
     return output
-
 
 def main():
     if len(sys.argv) != 2:
@@ -190,11 +145,13 @@ def main():
 
     filename = sys.argv[1]
     with open(filename, 'r') as file:
-            file_content = file.read()
+        file_content = file.read()
 
     pcn_list, nvars, ncubes = PCN_create(file_content)
     output = Final(pcn_list, nvars, ncubes)
-    ans = format(output)
-    print(ans)
+    ans = format_answer(output)
+    for line in ans:
+        print(line)
+
 if __name__ == "__main__":
     main()

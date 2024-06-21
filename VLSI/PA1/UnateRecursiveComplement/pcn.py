@@ -32,18 +32,3 @@ def Convert(file):
     initial = StringIO(file)
     array = [list(map(int, x.split())) for x in initial.read().splitlines() if x.strip()]
     return array
-
-def main():
-    if len(sys.argv) != 2:
-        print("Usage: python pcn_reader.py <filename>")
-        return
-
-    filename = sys.argv[1]
-    with open(filename, 'r') as file:
-        file_content = file.read()
-
-    pcn_list = PCN_create(file_content)
-    print(pcn_list)
-
-if __name__ == "__main__":
-    main()
