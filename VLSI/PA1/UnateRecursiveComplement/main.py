@@ -51,7 +51,6 @@ def Final(func, nvars, ncubes):
         N_c = AND(z, N_n, 'comp')
         answer = OR(P_c, N_c)
         return answer
-    return answer
 
 def BinateVariable(function, nvars, ncubes):
 
@@ -136,7 +135,7 @@ def OR(cofunction1, cofunction2):
     for i in cofunction1:
         combined_function.append(i)
     for j in cofunction2:
-        combined_function.append(i)
+        combined_function.append(j)
     return combined_function
 
 def AND(cofunction, mostbinate, factor):
@@ -147,8 +146,6 @@ def AND(cofunction, mostbinate, factor):
             cofunction[i][mostbinate-1] = '01'
     return cofunction
 
-    
-    return
 def CoFactor(function, mostbinate, term, ncubes):
     cofactor = []
     terminator = None
@@ -173,7 +170,7 @@ def CoFactor(function, mostbinate, term, ncubes):
     return cofactor
 
 def format(answer):
-    output = [0]
+    output = []
     for x in answer:
         counter = 0
         for y in answer[x]:
@@ -188,7 +185,7 @@ def format(answer):
 
 def main():
     if len(sys.argv) != 2:
-        print("Usage: python pcn_reader.py <filename>")
+        print("Usage: python main.py <filename>")
         return
 
     filename = sys.argv[1]
@@ -199,5 +196,5 @@ def main():
     output = Final(pcn_list, nvars, ncubes)
     ans = format(output)
     print(ans)
-    if __name__ == "__main__":
-        main()
+if __name__ == "__main__":
+    main()
