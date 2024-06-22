@@ -23,6 +23,7 @@ def DeMorgans(func, nvars, ncubes):
                 new_cube = ['11'] * nvars
                 new_cube[x] = "01"
                 complement.append(new_cube)
+    print("complement", complement)
     return complement
 
 def Final(func, nvars, ncubes):
@@ -32,25 +33,31 @@ def Final(func, nvars, ncubes):
     elif len(func) == 1:
         return DeMorgans(func, nvars, ncubes)
     else:
-        for x in range(ncubes):
-            if func[x] == ['11' * nvars]:
+        for cube in func:
+            if all(val == '11' for val in cube):
                 return [['']]
         # Code bulk of project
         z = BinateSelection(func, nvars, ncubes)
-        print(z)
+        print("z", z)
         P = CoFactor(func, z, 'true', ncubes)
+        print("p",P)
         N = CoFactor(func, z, 'neg', ncubes)
+        print("n",N)
         P_n = Final(P, nvars, len(P))
+        print("pn",P_n)
         N_n = Final(N, nvars, len(N))
+        print("nn",N_n)
         P_c = AND(P_n, z, 'true')
+        print("pc", P_c)
         N_c = AND(N_n, z, 'comp')
+        print('nc',N_c)
         answer = OR(P_c, N_c)
+        print("answer", answer)
         return answer
 
 def BinateVariable(function, nvars, ncubes):
     true_count = [0] * nvars
     neg_count = [0] * nvars
-
     binate_list = [False] * nvars
     binate = False
 
@@ -65,7 +72,6 @@ def BinateVariable(function, nvars, ncubes):
         if true_count[y] > 0 and neg_count[y] > 0:
             binate_list[y] = True
             binate = True
-
     return true_count, neg_count, binate_list, binate
 
 def BinateSelection(function, nvars, ncubes):
@@ -106,11 +112,12 @@ def OR(cofunction1, cofunction2):
     return combined_function
 
 def AND(cofunction, mostbinate, factor):
-    for i in range(len(cofunction)):
-        if factor == 'comp':
-            cofunction[i][mostbinate] = '10'
-        elif factor == 'true':
-            cofunction[i][mostbinate] = '01'
+    for cube in cofunction:
+        if cube != ['']:
+            if factor == 'comp':
+                cube[mostbinate] = '10'
+            elif factor == 'true':
+                cube[mostbinate] = '01'
     return cofunction
 
 def CoFactor(function, mostbinate, term, ncubes):
@@ -127,15 +134,24 @@ def CoFactor(function, mostbinate, term, ncubes):
     return cofactor
 
 def format_answer(answer):
+    seen_cubes = set()
     output = []
+    
     for cube in answer:
-        formatted_cube = ""
+        formatted_cube = []
         for idx, val in enumerate(cube):
+            dc_counter = 0
             if val == '01':
-                formatted_cube += f"{idx+1}"
+                formatted_cube.append(str(dc_counter + 1))
             elif val == '10':
-                formatted_cube += f"-{idx+1}"
-        output.append(formatted_cube)
+                formatted_cube.append(f'-{dc_counter + 1}')
+            if val == '11':
+                dc_counter += 1
+        formatted_cube_str = ' '.join(formatted_cube)
+        if formatted_cube_str not in seen_cubes:
+            output.append(formatted_cube_str)
+            seen_cubes.add(formatted_cube_str)
+    
     return output
 
 def main():
