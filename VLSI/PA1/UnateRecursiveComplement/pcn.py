@@ -1,4 +1,4 @@
-#PCN Functions
+#PCN Functions for initial input set up
 from io import StringIO
 import sys
 
@@ -28,6 +28,7 @@ def PCN_create( file ):
 
     return pcn_list, nvars, ncubes
 
+#Function to convert file formt into readable form for PCN_create function
 def Convert(file):
     initial = StringIO(file)
     array = [list(map(int, x.split())) for x in initial.read().splitlines() if x.strip()]
